@@ -1,0 +1,1 @@
+/Users/mac/wall-street-tokenization/treasury-dashboard/contracts/solvency_proof/target/wasm32v1-none/release/solvency_proof_contract.wasm: /Users/mac/wall-street-tokenization/treasury-dashboard/contracts/solvency_proof/src/lib.rs

@@ -1,0 +1,1 @@
+/Users/mac/wall-street-tokenization/treasury-dashboard/contracts/wall_street_asset/target/wasm32v1-none/release/wall_street_asset.wasm: /Users/mac/wall-street-tokenization/treasury-dashboard/contracts/wall_street_asset/src/lib.rs

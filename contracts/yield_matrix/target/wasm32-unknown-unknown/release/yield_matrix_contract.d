@@ -1,0 +1,1 @@
+/Users/mac/wall-street-tokenization/treasury-dashboard/contracts/yield_matrix/target/wasm32-unknown-unknown/release/yield_matrix_contract.wasm: /Users/mac/wall-street-tokenization/treasury-dashboard/contracts/yield_matrix/src/lib.rs

@@ -1,0 +1,10 @@
+/Users/mac/wall-street-tokenization/treasury-dashboard/contracts/wall_street_asset/target/release/deps/soroban_spec_rust-8ee617ae34871aba.d: /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/lib.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/syn_ext.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/trait.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/types.rs
+
+/Users/mac/wall-street-tokenization/treasury-dashboard/contracts/wall_street_asset/target/release/deps/libsoroban_spec_rust-8ee617ae34871aba.rlib: /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/lib.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/syn_ext.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/trait.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/types.rs
+
+/Users/mac/wall-street-tokenization/treasury-dashboard/contracts/wall_street_asset/target/release/deps/libsoroban_spec_rust-8ee617ae34871aba.rmeta: /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/lib.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/syn_ext.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/trait.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/types.rs
+
+/Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/lib.rs:
+/Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/syn_ext.rs:
+/Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/trait.rs:
+/Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-28.0.0/src/types.rs:
