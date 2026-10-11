@@ -1,0 +1,33 @@
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://schema.acta.build/v1/institutional-identity.jsonld"
+  ],
+  "id": "urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6",
+  "type": ["VerifiableCredential", "InstitutionalAccreditationCredential"],
+  "issuer": "did:stellar:G_REGULATED_PRIME_BROKER_CUSTODIAN_PUBKEY",
+  "issuanceDate": "2026-08-30T00:00:00Z",
+  "credentialSubject": {
+    "id": "did:stellar:G_INSTITUTIONAL_TREASURY_PUBKEY",
+    "legalEntityIdentifier": "5493001KJTIIGC8Y1R12",
+    "institutionName": "Apex Capital Holdings LLC",
+    "jurisdiction": "US-DE",
+    "accreditationStatus": "QUALIFIED_INSTITUTIONAL_BUYER",
+    "regulatoryClassification": {
+      "secExemption": "REG_D_506C",
+      "cftcStatus": "ELIGIBLE_CONTRACT_PARTICIPANT"
+    },
+    "governance": {
+      "threshold": 2,
+      "authorizedOfficers": [
+        "did:stellar:G_OFFICER_A_PUBKEY",
+        "did:stellar:G_OFFICER_B_PUBKEY",
+        "did:stellar:G_OFFICER_C_PUBKEY"
+      ]
+    }
+  },
+  "complianceOracle": {
+    "amlOracleAddress": "did:stellar:G_BSA_OFAC_ORACLE_PUBKEY",
+    "revocationEndpoint": "https://oracle.acta.build/v1/status/"
+  }
+}
