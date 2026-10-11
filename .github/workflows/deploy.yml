@@ -1,0 +1,33 @@
+name: Deploy to AWS ECS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+
+    - name: Login to Amazon ECR
+      run: aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 685248003648.dkr.ecr.us-west-2.amazonaws.com
+
+    - name: Build, Tag, and Push Docker Image
+      run: |
+        docker build --platform linux/amd64 -t nextjs-frontend .
+        docker tag nextjs-frontend:latest 685248003648.dkr.ecr.us-west-2.amazonaws.com/ledgersync-nextjs-frontend:latest
+        docker push 685248003648.dkr.ecr.us-west-2.amazonaws.com/ledgersync-nextjs-frontend:latest
+
+    - name: Update ECS Service
+      run: aws ecs update-service --cluster ledgersync-fargate-cluster --service ledgersync-nextjs-service --force-new-deployment --region us-west-2
