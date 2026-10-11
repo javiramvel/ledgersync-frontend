@@ -13,8 +13,8 @@ import {
   rpc as SorobanRpc,
 } from "@stellar/stellar-sdk";
 
-const RPC_URL = "https://soroban-testnet.stellar.org";
-const NETWORK_PASSPHRASE = Networks.TESTNET;
+const RPC_URL = "https://mainnet.sorobanrpc.com";
+const NETWORK_PASSPHRASE = Networks.PUBLIC;
 const server = new SorobanRpc.Server(RPC_URL, { allowHttp: false });
 
 export const LEDGERSYNC_REGISTRY = {
@@ -44,9 +44,9 @@ export async function executeLedgerSync(
     if (access.error) throw new Error(access.error);
     const activeKey = access.address;
 
-    const network = await getNetworkDetails();
-    if (network.network !== "TESTNET") {
-      throw new Error("Network mismatch: Switch Freighter to the Stellar Testnet.");
+   const network = await getNetworkDetails();
+    if (network.network !== "PUBLIC") { // Freighter returns "PUBLIC" for Mainnet
+      throw new Error("Network mismatch: Switch Freighter to the Stellar Mainnet.");
     }
 
     let targetContractId = "";
@@ -112,8 +112,9 @@ export async function executeLedgerSync(
     const assembledTx = SorobanRpc.assembleTransaction(tx, simulatedTx).build();
     const xdr = assembledTx.toXDR();
 
+  
     // V6 compliance patch: Strictly pass network identifier
-    const signedTx = await signTransaction(xdr, { networkPassphrase: "TESTNET" });
+    const signedTx = await signTransaction(xdr, { networkPassphrase: "Public Global Stellar Network ; September 2015" });
     if (signedTx.error) throw new Error(`Signature rejected: ${signedTx.error}`);
 
     const txToSubmit = TransactionBuilder.fromXDR(signedTx.signedTxXdr, NETWORK_PASSPHRASE) as any;
