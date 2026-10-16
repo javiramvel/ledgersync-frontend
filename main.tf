@@ -181,8 +181,8 @@ resource "aws_ecs_task_definition" "nextjs_task" {
       ]
       environment = [
         { name = "NODE_ENV", value = "production" },
-        { name = "NEXT_PUBLIC_SOROBAN_RPC", value = "https://soroban-testnet.stellar.org" },
-        { name = "NEXT_PUBLIC_STELLAR_NETWORK", value = "testnet" },
+        { name = "NEXT_PUBLIC_SOROBAN_RPC", value = "https://mainnet.sorobanrpc.com" },
+        { name = "NEXT_PUBLIC_STELLAR_NETWORK", value = "public" },
         { name = "NEXT_PUBLIC_FINNHUB_API_KEY", value = var.finnhub_api_key },
         { name = "PLAID_ENV", value = "sandbox" },
         { name = "PLAID_CLIENT_ID", value = var.plaid_client_id },
