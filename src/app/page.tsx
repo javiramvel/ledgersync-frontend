@@ -136,10 +136,10 @@ function StockSplitEngine() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#2C2C2E] pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono uppercase tracking-wider text-[#5E5CE6] font-semibold">
+            <span className="text-xs font-mono uppercase tracking-wider text-[#FF3B30] font-semibold">
               Corporate Action Engine 2
             </span>
-            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase bg-[#5E5CE6]/10 text-[#5E5CE6] border border-[#5E5CE6]/20 rounded">
+            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase bg-[#1C1C1E] text-[#8E8E93] border border-[#2C2C2E] rounded">
               Algorithmic Multiplier
             </span>
           </div>
@@ -167,7 +167,7 @@ function StockSplitEngine() {
               value={ratio}
               onChange={(e) => setRatio(e.target.value)}
               disabled={loading}
-              className="w-full bg-[#000000] border border-[#2C2C2E] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#5E5CE6] transition-all font-mono appearance-none cursor-pointer"
+              className="w-full bg-[#000000] border border-[#2C2C2E] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#FF3B30] transition-all font-mono appearance-none cursor-pointer"
             >
               <option value="2,1">2:1 Forward Split (Double circulating units, halve nominal unit price)</option>
               <option value="3,1">3:1 Forward Split (Triple circulating units)</option>
@@ -186,8 +186,8 @@ function StockSplitEngine() {
             disabled={loading}
             className={`w-full py-3 px-5 rounded-xl font-mono text-xs uppercase tracking-wider font-semibold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer ${
               loading
-                ? "bg-[#5E5CE6]/50 text-white/50 cursor-not-allowed"
-                : "bg-[#5E5CE6] hover:bg-[#5E5CE6]/80 text-white shadow-[#5E5CE6]/25 active:scale-[0.99]"
+                ? "bg-[#FF3B30]/30 text-white/50 cursor-not-allowed border border-[#FF3B30]/50"
+                : "bg-[#FF3B30]/10 text-[#FF3B30] hover:bg-[#FF3B30] hover:text-white border border-[#FF3B30]/30 transition-colors"
             }`}
           >
             {loading ? (
@@ -260,12 +260,10 @@ function DashboardContent() {
   const isPositive = historicalChart.periodChange >= 0;
 
   return (
-    <div className="min-h-screen bg-black text-[#F2F2F7] selection:bg-[#5E5CE6] selection:text-white font-sans antialiased relative overflow-hidden">
-      {/* ACTA Gateway style background illumination */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5E5CE6]/15 via-black to-black rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-[#000000] text-[#F2F2F7] selection:bg-[#34C759]/20 font-sans antialiased relative overflow-hidden">
       
       {/* Live Ticker Marquee */}
-      <div className="w-full bg-[#000000] border-b border-[#1C1C1E] py-2 overflow-hidden flex items-center relative z-50">
+      <div className="w-full bg-[#000000] border-b border-[#2C2C2E] py-2 overflow-hidden flex items-center relative z-50">
         <div className="animate-marquee flex items-center whitespace-nowrap gap-8 text-[11px] font-mono tracking-wide px-4">
           {TRACKED_SYMBOLS.map((sym) => {
             const feed = marketData[sym];
@@ -281,12 +279,12 @@ function DashboardContent() {
       </div>
 
       {/* Global Header */}
-      <nav className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[#1C1C1E] relative z-10">
+      <nav className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[#2C2C2E] relative z-10">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-xl bg-white flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]">LS</div>
           <h1 className="text-xl font-semibold tracking-tight text-white flex items-center gap-3">
             LedgerSync
-            <span className="px-2 py-0.5 text-[10px] font-mono tracking-widest uppercase bg-[#5E5CE6]/10 text-[#5E5CE6] border border-[#5E5CE6]/30 rounded-full">
+            <span className="px-2 py-0.5 text-[10px] font-mono tracking-widest uppercase bg-[#1C1C1E] text-[#8E8E93] border border-[#2C2C2E] rounded-full">
               Institutional
             </span>
           </h1>
@@ -350,17 +348,17 @@ function DashboardContent() {
           <div className="lg:col-span-4 flex flex-col gap-4">
             <h2 className="text-xs font-mono text-[#8E8E93] uppercase tracking-widest pl-2 mb-2">Modules</h2>
             
-            <button onClick={() => setActivePortal("trading")} className={`p-5 rounded-2xl border text-left transition-all duration-300 cursor-pointer ${activePortal === "trading" ? "bg-white text-black border-white scale-[1.02]" : "bg-[#1C1C1E]/50 border-[#2C2C2E] text-white hover:bg-[#2C2C2E]/50"}`}>
+            <button onClick={() => setActivePortal("trading")} className={`p-5 rounded-2xl border text-left transition-all duration-300 cursor-pointer ${activePortal === "trading" ? "bg-white text-black border-white shadow-lg" : "bg-[#1C1C1E] border-[#2C2C2E] text-white hover:border-[#3A3A3C]"}`}>
               <div className="text-lg font-semibold mb-1">Trading Terminal</div>
               <p className={`text-xs ${activePortal === "trading" ? "text-gray-600" : "text-[#8E8E93]"}`}>Atomic secondary market execution</p>
             </button>
 
-            <button onClick={() => setActivePortal("executive")} className={`p-5 rounded-2xl border text-left transition-all duration-300 cursor-pointer ${activePortal === "executive" ? "bg-white text-black border-white scale-[1.02]" : "bg-[#1C1C1E]/50 border-[#2C2C2E] text-white hover:bg-[#2C2C2E]/50"}`}>
+            <button onClick={() => setActivePortal("executive")} className={`p-5 rounded-2xl border text-left transition-all duration-300 cursor-pointer ${activePortal === "executive" ? "bg-white text-black border-white shadow-lg" : "bg-[#1C1C1E] border-[#2C2C2E] text-white hover:border-[#3A3A3C]"}`}>
               <div className="text-lg font-semibold mb-1">Corporate Treasury</div>
               <p className={`text-xs ${activePortal === "executive" ? "text-gray-600" : "text-[#8E8E93]"}`}>Asset issuance & compliance control</p>
             </button>
 
-            <button onClick={() => setActivePortal("auditor")} className={`p-5 rounded-2xl border text-left transition-all duration-300 cursor-pointer ${activePortal === "auditor" ? "bg-white text-black border-white scale-[1.02]" : "bg-[#1C1C1E]/50 border-[#2C2C2E] text-white hover:bg-[#2C2C2E]/50"}`}>
+            <button onClick={() => setActivePortal("auditor")} className={`p-5 rounded-2xl border text-left transition-all duration-300 cursor-pointer ${activePortal === "auditor" ? "bg-white text-black border-white shadow-lg" : "bg-[#1C1C1E] border-[#2C2C2E] text-white hover:border-[#3A3A3C]"}`}>
               <div className="text-lg font-semibold mb-1">Solvency Audit</div>
               <p className={`text-xs ${activePortal === "auditor" ? "text-gray-600" : "text-[#8E8E93]"}`}>SEC 17a-4 reserve verification</p>
             </button>
@@ -368,7 +366,7 @@ function DashboardContent() {
         </section>
 
         {/* Dynamic Workspace Rendering */}
-        <section className="bg-[#1C1C1E]/30 border border-[#2C2C2E] rounded-3xl p-8 backdrop-blur-md">
+        <section className="bg-transparent">
           {activePortal === "trading" && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <DexTradingTerminal />
@@ -377,7 +375,7 @@ function DashboardContent() {
           )}
           {activePortal === "executive" && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <CorporateTreasuryHub />
+              <CorporateTreasuryHub onSuccessAction={() => {}} />
               <StockSplitEngine />
               <LivePitchOracle />
             </div>
