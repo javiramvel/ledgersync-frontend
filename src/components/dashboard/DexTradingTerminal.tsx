@@ -1,10 +1,8 @@
-// src/components/dashboard/DexTradingTerminal.tsx
 "use client";
 
 import { useState, useMemo } from "react";
 import { useOrderBook } from "@/hooks/useOrderBook";
 
-// Configuration for LedgerSync Testnet Integration
 const BASE_ASSET = { code: "ls-BRK", issuer: "GBBD47IF6LWK7P7MDEVSCWTTCJM4RTOC6SPUGN5PZHKK34NRA762BDDF" }; 
 const QUOTE_ASSET = { code: "XLM", issuer: "" };
 
@@ -102,30 +100,28 @@ export default function DexTradingTerminal() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-slate-950 p-1 rounded-3xl">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-[#000000] p-1 rounded-3xl">
       
-      {/* Left Side: Order Book (4 Cols) */}
-      <div className="lg:col-span-4 bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col">
-        <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+      <div className="lg:col-span-4 bg-[#1C1C1E]/50 border border-[#2C2C2E] rounded-2xl p-4 flex flex-col">
+        <div className="flex justify-between items-center mb-4 border-b border-[#2C2C2E] pb-2">
           <h3 className="text-sm font-semibold text-white">Order Book (SDEX)</h3>
           <span className={`text-[10px] font-mono px-2 py-0.5 rounded flex items-center gap-1.5 ${
-            isLoading ? "text-slate-400 bg-slate-800/50" : "text-emerald-400 bg-emerald-400/10"
+            isLoading ? "text-[#8E8E93] bg-[#2C2C2E]/50" : "text-[#34C759] bg-[#34C759]/10"
           }`}>
-            {!isLoading && <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse"></span>}
+            {!isLoading && <span className="h-1.5 w-1.5 bg-[#34C759] rounded-full animate-pulse"></span>}
             {isLoading ? "SYNCING..." : "LIVE"}
           </span>
         </div>
 
-        <div className="text-[10px] font-mono text-slate-500 flex justify-between px-2 mb-2 uppercase tracking-wider">
+        <div className="text-[10px] font-mono text-[#8E8E93] flex justify-between px-2 mb-2 uppercase tracking-wider">
           <span>Price ({QUOTE_ASSET.code})</span>
           <span>Size ({BASE_ASSET.code})</span>
           <span>Total</span>
         </div>
 
-        {/* Asks */}
         <div className="space-y-0.5 mb-3 flex-1 flex flex-col justify-end">
           {displayAsks.length === 0 && !isLoading && (
-            <div className="text-center text-xs text-slate-600 py-2">No sell orders</div>
+            <div className="text-center text-xs text-[#8E8E93] py-2">No sell orders</div>
           )}
           {displayAsks.map((ask, idx) => {
             const depthPct = ((ask.total || 0) / maxVolume) * 100;
@@ -133,31 +129,29 @@ export default function DexTradingTerminal() {
               <div 
                 key={`ask-${idx}`} 
                 onClick={() => handleRowClick(ask.price, setBuyPrice)}
-                className="relative flex justify-between text-xs font-mono px-2 py-1 group cursor-pointer hover:bg-slate-800/50"
+                className="relative flex justify-between text-xs font-mono px-2 py-1 group cursor-pointer hover:bg-[#2C2C2E]/50"
               >
-                <div className="absolute right-0 top-0 bottom-0 bg-rose-500/10 z-0 transition-all duration-300" style={{ width: depthPct + "%" }}></div>
-                <span className="text-rose-400 z-10">{parseFloat(ask.price).toFixed(4)}</span>
-                <span className="text-slate-300 z-10">{parseFloat(ask.amount).toFixed(2)}</span>
-                <span className="text-slate-500 z-10">{ask.total?.toFixed(2)}</span>
+                <div className="absolute right-0 top-0 bottom-0 bg-[#FF3B30]/10 z-0 transition-all duration-300" style={{ width: depthPct + "%" }}></div>
+                <span className="text-[#FF3B30] z-10">{parseFloat(ask.price).toFixed(4)}</span>
+                <span className="text-[#F2F2F7] z-10">{parseFloat(ask.amount).toFixed(2)}</span>
+                <span className="text-[#8E8E93] z-10">{ask.total?.toFixed(2)}</span>
               </div>
             );
           })}
         </div>
 
-        {/* Spread Indicator */}
-        <div className="py-2 flex items-center justify-between border-y border-slate-800 mb-3 px-2 bg-slate-950/30">
+        <div className="py-2 flex items-center justify-between border-y border-[#2C2C2E] mb-3 px-2 bg-[#000000]/30">
           <span className="text-lg font-bold text-white tracking-tight">
             {displayAsks.length && displayBids.length ? `${midPrice}` : "---"}
           </span>
-          <span className="text-[10px] font-mono text-slate-500">
+          <span className="text-[10px] font-mono text-[#8E8E93]">
             Spread: {spread}
           </span>
         </div>
 
-        {/* Bids */}
         <div className="space-y-0.5 flex-1">
           {displayBids.length === 0 && !isLoading && (
-            <div className="text-center text-xs text-slate-600 py-2">No buy orders</div>
+            <div className="text-center text-xs text-[#8E8E93] py-2">No buy orders</div>
           )}
           {displayBids.map((bid, idx) => {
             const depthPct = ((bid.total || 0) / maxVolume) * 100;
@@ -165,42 +159,40 @@ export default function DexTradingTerminal() {
               <div 
                 key={`bid-${idx}`} 
                 onClick={() => handleRowClick(bid.price, setSellPrice)}
-                className="relative flex justify-between text-xs font-mono px-2 py-1 group cursor-pointer hover:bg-slate-800/50"
+                className="relative flex justify-between text-xs font-mono px-2 py-1 group cursor-pointer hover:bg-[#2C2C2E]/50"
               >
-                <div className="absolute right-0 top-0 bottom-0 bg-emerald-500/10 z-0 transition-all duration-300" style={{ width: depthPct + "%" }}></div>
-                <span className="text-emerald-400 z-10">{parseFloat(bid.price).toFixed(4)}</span>
-                <span className="text-slate-300 z-10">{parseFloat(bid.amount).toFixed(2)}</span>
-                <span className="text-slate-500 z-10">{bid.total?.toFixed(2)}</span>
+                <div className="absolute right-0 top-0 bottom-0 bg-[#34C759]/10 z-0 transition-all duration-300" style={{ width: depthPct + "%" }}></div>
+                <span className="text-[#34C759] z-10">{parseFloat(bid.price).toFixed(4)}</span>
+                <span className="text-[#F2F2F7] z-10">{parseFloat(bid.amount).toFixed(2)}</span>
+                <span className="text-[#8E8E93] z-10">{bid.total?.toFixed(2)}</span>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Right Side: Execution Engine (8 Cols) */}
-      <div className="lg:col-span-8 bg-slate-900/80 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
+      <div className="lg:col-span-8 bg-[#1C1C1E]/50 border border-[#2C2C2E] rounded-2xl p-6 flex flex-col justify-between">
         <div>
-          <div className="flex justify-between items-start border-b border-slate-800 pb-4 mb-6">
+          <div className="flex justify-between items-start border-b border-[#2C2C2E] pb-4 mb-6">
             <div>
               <h2 className="text-2xl font-bold text-white">Berkshire Hathaway Inc. Mirror</h2>
-              <p className="text-sm text-slate-400 font-mono mt-1">Stellar Contract: {BASE_ASSET.issuer.substring(0,8)}...{BASE_ASSET.issuer.substring(BASE_ASSET.issuer.length - 4)}</p>
+              <p className="text-sm text-[#8E8E93] font-mono mt-1">Stellar Contract: {BASE_ASSET.issuer.substring(0,8)}...{BASE_ASSET.issuer.substring(BASE_ASSET.issuer.length - 4)}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-semibold text-slate-300">Available Balance</p>
-              <p className="text-xl font-mono text-indigo-400 mt-0.5">142.50 {QUOTE_ASSET.code}</p>
+              <p className="text-sm font-semibold text-[#F2F2F7]">Available Balance</p>
+              <p className="text-xl font-mono text-[#5E5CE6] mt-0.5">142.50 {QUOTE_ASSET.code}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {/* Buy Interface */}
-            <div className="bg-slate-950/50 border border-slate-800 rounded-xl p-4">
+            <div className="bg-[#000000] border border-[#2C2C2E] rounded-xl p-4">
               <div className="flex justify-between mb-4">
-                <span className="text-sm font-semibold text-emerald-400">Buy {BASE_ASSET.code}</span>
-                <span className="text-xs text-slate-500 font-mono">Limit</span>
+                <span className="text-sm font-semibold text-[#34C759]">Buy {BASE_ASSET.code}</span>
+                <span className="text-xs text-[#8E8E93] font-mono">Limit</span>
               </div>
               <div className="space-y-3">
-                <div className="bg-slate-900 border border-slate-700 rounded-lg p-2.5 flex justify-between items-center">
-                  <span className="text-xs text-slate-500 font-mono">Price</span>
+                <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-lg p-2.5 flex justify-between items-center">
+                  <span className="text-xs text-[#8E8E93] font-mono">Price</span>
                   <input 
                     type="number" 
                     value={buyPrice}
@@ -209,8 +201,8 @@ export default function DexTradingTerminal() {
                     className="bg-transparent text-right text-sm font-mono text-white outline-none w-1/2" 
                   />
                 </div>
-                <div className="bg-slate-900 border border-slate-700 rounded-lg p-2.5 flex justify-between items-center">
-                  <span className="text-xs text-slate-500 font-mono">Amount</span>
+                <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-lg p-2.5 flex justify-between items-center">
+                  <span className="text-xs text-[#8E8E93] font-mono">Amount</span>
                   <input 
                     type="number" 
                     value={buyAmount}
@@ -219,28 +211,27 @@ export default function DexTradingTerminal() {
                     className="bg-transparent text-right text-sm font-mono text-white outline-none w-1/2" 
                   />
                 </div>
-                <div className="text-right text-[10px] text-slate-500 font-mono pr-1">
+                <div className="text-right text-[10px] text-[#8E8E93] font-mono pr-1">
                   Total: {buyPrice && buyAmount ? (parseFloat(buyPrice) * parseFloat(buyAmount)).toFixed(4) : "0.0000"} {QUOTE_ASSET.code}
                 </div>
                 <button 
                   onClick={() => executeOrder("BUY")}
                   disabled={isSubmittingBuy || isSubmittingSell}
-                  className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/50 text-slate-950 font-bold py-3 rounded-lg transition-colors mt-2 shadow-lg shadow-emerald-500/20 cursor-pointer disabled:cursor-not-allowed"
+                  className="w-full bg-[#34C759] hover:bg-[#34C759]/80 disabled:bg-[#34C759]/30 disabled:text-white/50 text-[#000000] font-bold py-3 rounded-lg transition-colors mt-2 cursor-pointer disabled:cursor-not-allowed"
                 >
                   {isSubmittingBuy ? "BROADCASTING..." : "EXECUTE BUY ORDER"}
                 </button>
               </div>
             </div>
 
-            {/* Sell Interface */}
-            <div className="bg-slate-950/50 border border-slate-800 rounded-xl p-4">
+            <div className="bg-[#000000] border border-[#2C2C2E] rounded-xl p-4">
               <div className="flex justify-between mb-4">
-                <span className="text-sm font-semibold text-rose-400">Sell {BASE_ASSET.code}</span>
-                <span className="text-xs text-slate-500 font-mono">Limit</span>
+                <span className="text-sm font-semibold text-[#FF3B30]">Sell {BASE_ASSET.code}</span>
+                <span className="text-xs text-[#8E8E93] font-mono">Limit</span>
               </div>
               <div className="space-y-3">
-                <div className="bg-slate-900 border border-slate-700 rounded-lg p-2.5 flex justify-between items-center">
-                  <span className="text-xs text-slate-500 font-mono">Price</span>
+                <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-lg p-2.5 flex justify-between items-center">
+                  <span className="text-xs text-[#8E8E93] font-mono">Price</span>
                   <input 
                     type="number" 
                     value={sellPrice}
@@ -249,8 +240,8 @@ export default function DexTradingTerminal() {
                     className="bg-transparent text-right text-sm font-mono text-white outline-none w-1/2" 
                   />
                 </div>
-                <div className="bg-slate-900 border border-slate-700 rounded-lg p-2.5 flex justify-between items-center">
-                  <span className="text-xs text-slate-500 font-mono">Amount</span>
+                <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-lg p-2.5 flex justify-between items-center">
+                  <span className="text-xs text-[#8E8E93] font-mono">Amount</span>
                   <input 
                     type="number" 
                     value={sellAmount}
@@ -259,13 +250,13 @@ export default function DexTradingTerminal() {
                     className="bg-transparent text-right text-sm font-mono text-white outline-none w-1/2" 
                   />
                 </div>
-                <div className="text-right text-[10px] text-slate-500 font-mono pr-1">
+                <div className="text-right text-[10px] text-[#8E8E93] font-mono pr-1">
                   Total: {sellPrice && sellAmount ? (parseFloat(sellPrice) * parseFloat(sellAmount)).toFixed(4) : "0.0000"} {QUOTE_ASSET.code}
                 </div>
                 <button 
                   onClick={() => executeOrder("SELL")}
                   disabled={isSubmittingBuy || isSubmittingSell}
-                  className="w-full bg-rose-500 hover:bg-rose-400 disabled:bg-rose-500/50 text-white font-bold py-3 rounded-lg transition-colors mt-2 shadow-lg shadow-rose-500/20 cursor-pointer disabled:cursor-not-allowed"
+                  className="w-full bg-[#FF3B30] hover:bg-[#FF3B30]/80 disabled:bg-[#FF3B30]/30 disabled:text-white/50 text-[#000000] font-bold py-3 rounded-lg transition-colors mt-2 cursor-pointer disabled:cursor-not-allowed"
                 >
                   {isSubmittingSell ? "BROADCASTING..." : "EXECUTE SELL ORDER"}
                 </button>
@@ -276,11 +267,11 @@ export default function DexTradingTerminal() {
         
         <div className="mt-6 flex flex-col items-center gap-2">
           {tradeMessage && (
-            <div className={`text-xs px-4 py-2 rounded border ${tradeMessage.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+            <div className={`text-xs px-4 py-2 rounded border ${tradeMessage.type === 'success' ? 'bg-[#34C759]/10 text-[#34C759] border-[#34C759]/20' : 'bg-[#FF3B30]/10 text-[#FF3B30] border-[#FF3B30]/20'}`}>
               {tradeMessage.text}
             </div>
           )}
-          <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+          <p className="text-[10px] text-[#8E8E93] font-mono uppercase tracking-widest">
             Settlement: Atomic T+0 • Network Fee: 0.00001 XLM
           </p>
         </div>
