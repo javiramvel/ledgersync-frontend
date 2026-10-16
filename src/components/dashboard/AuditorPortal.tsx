@@ -16,7 +16,6 @@ export default function AuditorPortal() {
     setTxHash(null);
     
     try {
-      // Execute the on-chain verify reserves call
       const result = await executeLedgerSync("VERIFY_RESERVES", "USDC", 0);
       
       if (result.success && result.txHash) {
@@ -25,15 +24,11 @@ export default function AuditorPortal() {
         setTxHash(result.txHash);
         setMerkleRoot(`${result.txHash.substring(0, 16)}...${result.txHash.substring(result.txHash.length - 12)} (Valid 1:1 Parity)`);
       } else {
-        // Fallback for demo purposes if executeLedgerSync isn't fully configured for this specific action yet
-        const mockHash = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-        setTxHash(mockHash);
-        setLastVerified(new Date().toLocaleString());
-        setMerkleRoot(`${mockHash.substring(0, 16)}...${mockHash.substring(mockHash.length - 12)} (Valid 1:1 Parity)`);
+        throw new Error(result.error || "Execution failed");
       }
     } catch (error: any) {
       console.error("Audit generation failed:", error);
-      setMerkleRoot("Verification Failed.");
+      setMerkleRoot(`Verification Failed: ${error.message}`);
     } finally {
       setIsVerifying(false);
     }
@@ -44,7 +39,6 @@ export default function AuditorPortal() {
     setIsExporting(true);
     
     try {
-      // Query the Next.js API route that interfaces with the AWS SDK and terraform-admin credentials
       const res = await fetch("/api/compliance/generate-proof", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,14 +46,9 @@ export default function AuditorPortal() {
       });
       
       const data = await res.json();
-      
-      if (!data.success) {
-        throw new Error(data.error);
-      }
+      if (!data.success) throw new Error(data.error);
 
       const proof = data.proof;
-
-      // Format the SEC 17a-4 WORM compliant receipt
       const receiptContent = `
 ====================================================
 LEDGERSYNC PRIME - SEC RULE 17a-4 COMPLIANCE RECEIPT
@@ -84,7 +73,6 @@ Status: ${proof.immutability_status}
 ====================================================
       `.trim();
 
-      // Trigger local download for the auditor
       const blob = new Blob([receiptContent], { type: "text/plain" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -95,7 +83,6 @@ Status: ${proof.immutability_status}
       
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-
     } catch (error) {
       console.error("Export failed:", error);
       alert("Failed to generate compliance proof from AWS S3.");
@@ -109,9 +96,7 @@ Status: ${proof.immutability_status}
       <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
         <div>
           <h2 className="text-xl font-semibold text-white">Live Solvency Audit</h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Zero-Knowledge Reserve Verification Engine
-          </p>
+          <p className="text-xs text-slate-400 mt-1">Zero-Knowledge Reserve Verification Engine</p>
         </div>
         <button
           onClick={runAudit}
