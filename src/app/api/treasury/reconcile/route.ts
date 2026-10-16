@@ -20,19 +20,19 @@ export async function POST(request: Request) {
       throw new Error("Server misconfiguration: Missing environment variables.");
     }
 
-    // Initialize institutional admin signer
     const adminKeypair = Keypair.fromSecret(adminSecret);
     const account = await server.getAccount(adminKeypair.publicKey());
     const contract = new Contract(oracleId);
 
-    // Construct SCVal arguments for Soroban
+    // Map "deployer" UI string to the actual cryptographic public key
+    const resolvedAddress = targetAddress === 'deployer' ? adminKeypair.publicKey() : targetAddress;
+
     const contractArgs = [
       nativeToScVal(ticker, { type: "symbol" }),
       nativeToScVal(BigInt(Math.floor(amount)), { type: "i128" }),
-      nativeToScVal(targetAddress, { type: "address" })
+      nativeToScVal(resolvedAddress, { type: "address" })
     ];
 
-    // Build the native transaction
     const tx = new TransactionBuilder(account, {
       fee: "100000",
       networkPassphrase: NETWORK_PASSPHRASE,
@@ -41,13 +41,11 @@ export async function POST(request: Request) {
       .setTimeout(60)
       .build();
 
-    // Simulate to calculate precise gas and footprint
     const simulatedTx = await server.simulateTransaction(tx);
     if (SorobanRpc.Api.isSimulationError(simulatedTx)) {
       throw new Error(`Simulation failed: ${simulatedTx.error}`);
     }
 
-    // Assemble, sign, and submit to Mainnet
     const assembledTx = SorobanRpc.assembleTransaction(tx, simulatedTx).build();
     assembledTx.sign(adminKeypair);
 
@@ -57,7 +55,6 @@ export async function POST(request: Request) {
       throw new Error(`Transaction rejected by network.`);
     }
 
-    // Poll for cryptographic finality
     let txStatus = await server.getTransaction(response.hash);
     let attempts = 0;
     while (txStatus.status === "NOT_FOUND" && attempts < 15) {
