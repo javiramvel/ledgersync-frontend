@@ -292,7 +292,7 @@ function DashboardContent() {
 
         <div className="flex items-center gap-2 font-mono text-xs text-slate-400">
           <span>
-            Horizon Testnet: <strong className="text-emerald-400 font-normal">Connected</strong>
+            {process.env.NEXT_PUBLIC_STELLAR_NETWORK === "public" ? "Stellar Mainnet" : "Horizon Testnet"}: <strong className="text-emerald-400 font-normal">Connected</strong>
           </span>
           <span className="text-slate-700">|</span>
           <span>
