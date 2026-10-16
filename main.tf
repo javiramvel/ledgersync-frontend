@@ -1,3 +1,23 @@
+variable "finnhub_api_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "plaid_client_id" {
+  type      = string
+  sensitive = true
+}
+
+variable "plaid_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "admin_secret_key" {
+  type      = string
+  sensitive = true
+}
+
 provider "aws" {
   region = "us-west-2"
 }
@@ -35,7 +55,6 @@ data "aws_iam_role" "ecs_execution_role" {
   name = "ecsTaskExecutionRole"
 }
 
-# Grant the existing task role permission to write to your specific S3 bucket
 resource "aws_iam_role_policy" "s3_audit_write_policy" {
   name   = "ledgersync_s3_audit_write"
   role   = data.aws_iam_role.ecs_execution_role.id
@@ -164,18 +183,16 @@ resource "aws_ecs_task_definition" "nextjs_task" {
         { name = "NODE_ENV", value = "production" },
         { name = "NEXT_PUBLIC_SOROBAN_RPC", value = "https://soroban-testnet.stellar.org" },
         { name = "NEXT_PUBLIC_STELLAR_NETWORK", value = "testnet" },
-        { name = "NEXT_PUBLIC_FINNHUB_API_KEY", value = "***REMOVED***" },
+        { name = "NEXT_PUBLIC_FINNHUB_API_KEY", value = var.finnhub_api_key },
         { name = "PLAID_ENV", value = "sandbox" },
-        { name = "PLAID_CLIENT_ID", value = "6a81fec52b6669000eae2be6" },
-        { name = "PLAID_SECRET", value = "***REMOVED***" },
+        { name = "PLAID_CLIENT_ID", value = var.plaid_client_id },
+        { name = "PLAID_SECRET", value = var.plaid_secret },
         { name = "NEXT_PUBLIC_SOLVENCY_PROOF_CONTRACT_ID", value = "CDYIBWL6QJXXDCI6K07LLKGR0AWW7IIIVAE4X3FC6HTCFLVKHZ4WP653" },
         { name = "NEXT_PUBLIC_COMPLIANCE_CONTRACT_ID", value = "CDSCMHG5H6US4Q45B326B2IBJTZW4QUDWZT5YIWHKJGMHIVJKQV2QNQV" },
-        { name = "ADMIN_SECRET_KEY", value = "***REMOVED***" },
+        { name = "ADMIN_SECRET_KEY", value = var.admin_secret_key },
         { name = "NEXT_PUBLIC_YIELD_CONTRACT_ID", value = "CA26MUWWNBUOIJIGMNSCOOR6HKTUB6PX5LTHNOL5PS3UH4IWMJ5SHVE7" },
         { name = "PRIMARY_ASSET_ID", value = "CB22A5XKUKTKYKMP4QUIOH2RVUCLNAYFO3EKSZUP2C6BL5KJ3TFHP4ZU" },
         { name = "RECONCILIATION_ORACLE_ID", value = "CBBYBSZXACV6ROLLALLNRNQRGAZAL2SED5P2SMT4B4XRCGPYUW6ZO3XX" },
-        { name = "AWS_ACCESS_KEY_ID", value = "***REMOVED***" },
-        { name = "AWS_SECRET_ACCESS_KEY", value = "***REMOVED***" },
         { name = "NEXT_PUBLIC_AUDIT_BUCKET_NAME", value = "wall-street-tokenization-audit-logs-685248003648-us-east-1-an" },
         { name = "AWS_REGION", value = "us-east-1" }
       ]
@@ -219,7 +236,7 @@ resource "aws_db_instance" "ledgersync_db" {
   identifier                  = "ledgersync-production-db"
   allocated_storage           = 50
   engine                      = "postgres"
-  engine_version              = "15" # Auto-selects the latest supported minor version
+  engine_version              = "15" 
   instance_class              = "db.t4g.large"
   username                    = "ledgersync_admin"
   manage_master_user_password = true
@@ -236,7 +253,7 @@ resource "aws_db_instance" "ledgersync_db" {
 resource "aws_wafv2_web_acl" "ledgersync_waf" {
   provider    = aws.us-east-1
   name        = "ledgersync-global-waf"
-  description = "Layer 7 DDoS and Exploit Protection" # Removed '&'
+  description = "Layer 7 DDoS and Exploit Protection"
   scope       = "CLOUDFRONT"
   
   default_action {
