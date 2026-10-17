@@ -20,7 +20,7 @@ export const LEDGERSYNC_REGISTRY = {
   SOLVENCY_PROOF: process.env.NEXT_PUBLIC_SOLVENCY_PROOF_CONTRACT_ID || "CDYIBWL6QJXXDCI6K07LLKGR0AWW7IIIVAE4X3FC6HTCFLVKHZ4WP653",
   YIELD_MATRIX: process.env.NEXT_PUBLIC_YIELD_CONTRACT_ID || "CA26MUWWNBUOIJIGMNSCOOR6HKTUB6PX5LTHNOL5PS3UH4IWMJ5SHVE7",
   INSTITUTIONAL_COMPLIANCE: process.env.NEXT_PUBLIC_COMPLIANCE_CONTRACT_ID || "CDSCMHG5H6US4Q45B326B2IBJTZW4QUDWZT5YIWHKJGMHIVJKQV2QNQV",
-  DELTA_RECONCILIATION: process.env.RECONCILIATION_ORACLE_ID || "CDIGJICQW5ADASOSPWX2VA4GTKPV34ELRVFU557UEZXS2LWEIEERZ4HJ"
+  DELTA_RECONCILIATION: "CDIGJICQW5ADASOSPWX2VA4GTKPV34ELRVFU557UEZXS2LWEIEERZ4HJ" // Hardcoded to bypass AWS cache
 };
 
 export type LedgerSyncAction = 
@@ -43,8 +43,8 @@ export async function executeLedgerSync(
     if (access.error) throw new Error(access.error);
     const activeKey = access.address;
 
-   const network = await getNetworkDetails();
-    if (network.network !== "PUBLIC") { // Freighter returns "PUBLIC" for Mainnet
+    const network = await getNetworkDetails();
+    if (network.network !== "PUBLIC") { 
       throw new Error("Network mismatch: Switch Freighter to the Stellar Mainnet.");
     }
 
@@ -96,24 +96,20 @@ export async function executeLedgerSync(
     const contract = new Contract(targetContractId);
 
     const tx = new TransactionBuilder(account, {
-  fee: "1000000", // Bumped to 1,000,000 stroops for Mainnet surge pricing
-  networkPassphrase: NETWORK_PASSPHRASE,
-})
+      fee: "1000000",
+      networkPassphrase: NETWORK_PASSPHRASE,
+    })
       .addOperation(contract.call(functionName, ...contractArgs))
-      .setTimeout(60)
+      .setTimeout(300)
       .build();
 
-    const simulatedTx = await server.simulateTransaction(tx);
-    if (SorobanRpc.Api.isSimulationError(simulatedTx)) {
-      throw new Error(`Simulation failed: ${simulatedTx.error}`);
-    }
+    // The robust, modern way to prepare the footprint and simulation for Soroban VMs
+    const preparedTx = await server.prepareTransaction(tx);
 
-    const assembledTx = SorobanRpc.assembleTransaction(tx, simulatedTx).build();
-    const xdr = assembledTx.toXDR();
+    const xdr = preparedTx.toXDR();
 
-  
-    // V6 compliance patch: Strictly pass network identifier
-    const signedTx = await signTransaction(xdr, { networkPassphrase: "Public Global Stellar Network ; September 2015" });
+    // V6 compliance patch: Strictly pass network identifier natively
+    const signedTx = await signTransaction(xdr, { networkPassphrase: Networks.PUBLIC });
     if (signedTx.error) throw new Error(`Signature rejected: ${signedTx.error}`);
 
     const txToSubmit = TransactionBuilder.fromXDR(signedTx.signedTxXdr, NETWORK_PASSPHRASE) as any;
