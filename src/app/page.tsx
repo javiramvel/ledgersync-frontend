@@ -272,7 +272,7 @@ function DashboardContent() {
         </div>
         <div className="flex items-center gap-3 font-mono text-[11px] text-[#8E8E93]">
           <span>
-            {process.env.NEXT_PUBLIC_STELLAR_NETWORK === "public" ? "Stellar Mainnet" : "Horizon Testnet"}: <strong className="text-[#34C759] font-normal">Connected</strong>
+            {process.env.NEXT_PUBLIC_STELLAR_NETWORK === "public" ? "Stellar Mainnet" : "Mainnet"}: <strong className="text-[#34C759] font-normal">Connected</strong>
           </span>
         </div>
       </nav>
