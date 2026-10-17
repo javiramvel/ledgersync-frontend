@@ -96,9 +96,9 @@ export async function executeLedgerSync(
     const contract = new Contract(targetContractId);
 
     const tx = new TransactionBuilder(account, {
-      fee: "10000", // Elevated fee margin to prevent dropped packets during testnet congestion
-      networkPassphrase: NETWORK_PASSPHRASE,
-    })
+  fee: "1000000", // Bumped to 1,000,000 stroops for Mainnet surge pricing
+  networkPassphrase: NETWORK_PASSPHRASE,
+})
       .addOperation(contract.call(functionName, ...contractArgs))
       .setTimeout(60)
       .build();
