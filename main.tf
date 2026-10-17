@@ -192,7 +192,7 @@ resource "aws_ecs_task_definition" "nextjs_task" {
         { name = "ADMIN_SECRET_KEY", value = var.admin_secret_key },
         { name = "NEXT_PUBLIC_YIELD_CONTRACT_ID", value = "CA26MUWWNBUOIJIGMNSCOOR6HKTUB6PX5LTHNOL5PS3UH4IWMJ5SHVE7" },
         { name = "PRIMARY_ASSET_ID", value = "CB22A5XKUKTKYKMP4QUIOH2RVUCLNAYFO3EKSZUP2C6BL5KJ3TFHP4ZU" },
-        { name = "RECONCILIATION_ORACLE_ID", value = "CBBYBSZXACV6ROLLALLNRNQRGAZAL2SED5P2SMT4B4XRCGPYUW6ZO3XX" },
+        { name = "RECONCILIATION_ORACLE_ID", value = "CDIGJICQW5ADASOSPWX2VA4GTKPV34ELRVFU557UEZXS2LWEIEERZ4HJ" },
         { name = "NEXT_PUBLIC_AUDIT_BUCKET_NAME", value = "wall-street-tokenization-audit-logs-685248003648-us-east-1-an" },
         { name = "AWS_REGION", value = "us-east-1" }
       ]
