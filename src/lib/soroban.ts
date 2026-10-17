@@ -9,6 +9,7 @@ import {
   Networks,
   Contract,
   nativeToScVal,
+  xdr,
   rpc as SorobanRpc,
 } from "@stellar/stellar-sdk";
 
@@ -20,7 +21,7 @@ export const LEDGERSYNC_REGISTRY = {
   SOLVENCY_PROOF: process.env.NEXT_PUBLIC_SOLVENCY_PROOF_CONTRACT_ID || "CDYIBWL6QJXXDCI6K07LLKGR0AWW7IIIVAE4X3FC6HTCFLVKHZ4WP653",
   YIELD_MATRIX: process.env.NEXT_PUBLIC_YIELD_CONTRACT_ID || "CA26MUWWNBUOIJIGMNSCOOR6HKTUB6PX5LTHNOL5PS3UH4IWMJ5SHVE7",
   INSTITUTIONAL_COMPLIANCE: process.env.NEXT_PUBLIC_COMPLIANCE_CONTRACT_ID || "CDSCMHG5H6US4Q45B326B2IBJTZW4QUDWZT5YIWHKJGMHIVJKQV2QNQV",
-  DELTA_RECONCILIATION: "CDIGJICQW5ADASOSPWX2VA4GTKPV34ELRVFU557UEZXS2LWEIEERZ4HJ" // Hardcoded to bypass AWS cache
+  DELTA_RECONCILIATION: "CDIGJICQW5ADASOSPWX2VA4GTKPV34ELRVFU557UEZXS2LWEIEERZ4HJ"
 };
 
 export type LedgerSyncAction = 
@@ -52,7 +53,6 @@ export async function executeLedgerSync(
     let functionName = "";
     let contractArgs: any[] = [];
     
-    // Internal sequence tracker for Delta Reconciliation
     let currentNonce = parseInt(localStorage.getItem('ledgerSyncNonce') || '0');
     let nextNonce = BigInt(currentNonce + 1);
 
@@ -96,30 +96,36 @@ export async function executeLedgerSync(
     const contract = new Contract(targetContractId);
 
     const tx = new TransactionBuilder(account, {
-      fee: "1000000",
+      fee: "5000000", // Aggressive fee bump to 5 XLM to eliminate resource constraints
       networkPassphrase: NETWORK_PASSPHRASE,
     })
       .addOperation(contract.call(functionName, ...contractArgs))
       .setTimeout(300)
       .build();
 
-    // The robust, modern way to prepare the footprint and simulation for Soroban VMs
     const preparedTx = await server.prepareTransaction(tx);
+    const rawXdr = preparedTx.toXDR();
 
-    const xdr = preparedTx.toXDR();
-
-    // V6 compliance patch: Strictly pass network identifier natively
-    const signedTx = await signTransaction(xdr, { networkPassphrase: Networks.PUBLIC });
+    const signedTx = await signTransaction(rawXdr, { networkPassphrase: Networks.PUBLIC });
     if (signedTx.error) throw new Error(`Signature rejected: ${signedTx.error}`);
 
     const txToSubmit = TransactionBuilder.fromXDR(signedTx.signedTxXdr, NETWORK_PASSPHRASE) as any;
     const response = await server.sendTransaction(txToSubmit);
 
+// DEEP DIAGNOSTIC DECODER
     if (response.status === "ERROR") {
-      throw new Error(`Transaction rejected by network. Hash: ${response.hash}`);
+      let exactError = "Unknown rejection";
+      if (response.errorResult) {
+        try {
+          // The SDK already parsed this into an xdr.TransactionResult object
+          exactError = response.errorResult.result().switch().name; 
+        } catch (e) {
+          exactError = "Failed to extract Core error";
+        }
+      }
+      throw new Error(`Mainnet Rejection Code: ${exactError}`);
     }
 
-    // Cryptographic Finality Polling: Await ledger inclusion
     let txStatus = await server.getTransaction(response.hash);
     let attempts = 0;
     while (txStatus.status === "NOT_FOUND" && attempts < 10) {
@@ -129,10 +135,9 @@ export async function executeLedgerSync(
     }
 
     if (txStatus.status === "FAILED") {
-      throw new Error(`Transaction failed on ledger execution. Hash: ${response.hash}`);
+      throw new Error(`Ledger execution failed. Hash: ${response.hash}`);
     }
 
-    // Persist the incremented nonce locally upon successful network inclusion
     if (action === "SYNC_STATE") {
         localStorage.setItem('ledgerSyncNonce', nextNonce.toString());
     }
