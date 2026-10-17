@@ -1,5 +1,3 @@
-// src/components/ComplianceVerification.tsx
-
 "use client";
 
 import { useState } from "react";
@@ -38,21 +36,21 @@ export default function ComplianceVerification() {
   };
 
   return (
-    <div className="p-6 border rounded-2xl bg-slate-950 border-slate-800 text-slate-300 shadow-2xl">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6 border rounded-2xl bg-[#1C1C1E] border-[#2C2C2E] text-white shadow-2xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             Regulatory Compliance Gateway
-            <span className="px-2 py-0.5 text-[10px] font-mono tracking-wide uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">
+            <span className="px-2 py-0.5 text-[10px] font-mono tracking-wide uppercase bg-[#34C759]/10 text-[#34C759] border border-[#34C759]/20 rounded">
               WORM Storage Active
             </span>
           </h2>
-          <p className="text-xs text-slate-500 mt-1">SEC Rule 17a-4(f) & FIX Protocol Immutable Export</p>
+          <p className="text-xs text-[#8E8E93] mt-1">SEC Rule 17a-4(f) & FIX Protocol Immutable Export</p>
         </div>
         <button
           onClick={runAudit}
           disabled={isGenerating}
-          className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-mono text-sm border border-slate-700 transition-colors disabled:opacity-50"
+          className="px-6 py-3 bg-white hover:bg-neutral-200 text-black rounded-xl font-mono text-xs uppercase tracking-wider font-semibold transition-colors disabled:opacity-50 cursor-pointer shadow-lg"
         >
           {isGenerating ? "Computing Merkle Root..." : "Generate 17a-4 Proof"}
         </button>
@@ -60,12 +58,12 @@ export default function ComplianceVerification() {
 
       {report ? (
         <div className="space-y-4">
-          <div className="p-4 bg-slate-900 border border-emerald-500/30 rounded-xl">
+          <div className="p-4 bg-[#000000] border border-[#34C759]/30 rounded-xl">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-              <h3 className="text-sm font-bold text-emerald-400 font-mono">CRYPTOGRAPHIC RESERVE VERIFIED</h3>
+              <div className="w-2 h-2 rounded-full bg-[#34C759] animate-pulse"></div>
+              <h3 className="text-sm font-bold text-[#34C759] font-mono uppercase">Cryptographic Reserve Verified</h3>
             </div>
-            <p className="text-xs text-slate-400 font-mono leading-relaxed">
+            <p className="text-xs text-[#8E8E93] font-mono leading-relaxed">
               Merkle inclusion proofs confirmed. Computed leaf hashes match the publicly anchored root on Stellar Soroban WASM. 
               Record securely indexed for 6-year retention.
             </p>
@@ -73,16 +71,16 @@ export default function ComplianceVerification() {
 
           <div className="relative">
             <div className="absolute top-0 right-0 p-2">
-              <span className="text-[9px] text-slate-500 font-mono uppercase bg-slate-900 px-2 py-1 rounded">FIX Protocol v5.0</span>
+              <span className="text-[9px] text-[#8E8E93] font-mono uppercase bg-[#1C1C1E] border border-[#2C2C2E] px-2 py-1 rounded">FIX Protocol v5.0</span>
             </div>
-            <pre className="p-5 bg-slate-900/80 rounded-xl border border-slate-800 text-xs font-mono text-indigo-300 overflow-x-auto">
+            <pre className="p-5 bg-[#1C1C1E] rounded-xl border border-[#2C2C2E] text-xs font-mono text-[#8E8E93] overflow-x-auto">
               <code>{JSON.stringify(report, null, 2)}</code>
             </pre>
           </div>
         </div>
       ) : (
-        <div className="h-48 border border-dashed border-slate-800 rounded-xl flex items-center justify-center bg-slate-900/20">
-          <p className="text-sm text-slate-600 font-mono">Awaiting Auditor Execution...</p>
+        <div className="h-48 border border-dashed border-[#2C2C2E] rounded-xl flex items-center justify-center bg-[#000000]">
+          <p className="text-sm text-[#8E8E93] font-mono">Awaiting Auditor Execution...</p>
         </div>
       )}
     </div>
