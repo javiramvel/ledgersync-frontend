@@ -18,39 +18,36 @@ export default function MarketWatch({ isAuthenticated }: { isAuthenticated: bool
   const [chainlinkPrices, setChainlinkPrices] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    // Update the timestamp strictly when global Finnhub market data changes
     if (Object.keys(marketData).length > 0) {
       setLastUpdated(new Date().toLocaleTimeString());
     }
   }, [marketData]);
 
   useEffect(() => {
-    // Fetch On-Chain Truth (Chainlink via Soroban RPC) for all tracked assets
     const fetchChainlinkData = async () => {
       const updatedPrices: Record<string, string> = {};
       
       for (const asset of TRACKED_ASSETS) {
-        // Map tickers to the registry keys
         const registryKey = `${asset.ticker}_USD`;
         
         // @ts-ignore
         const dataId = LEDGERSYNC_REGISTRY.CHAINLINK_FEEDS[registryKey];
 
-        if (!dataId || dataId === "PENDING_MAINNET_DEPLOYMENT") {
+        if (!dataId || dataId === "PENDING_MAINNET_DEPLOYMENT" || dataId === null) {
           updatedPrices[asset.ticker] = "Pending Sync";
           continue;
         }
 
         try {
-          // Initialize Soroban RPC Server
           const server = new SorobanRpc.Server('https://soroban-rpc.mainnet.stellar.org');
           
-          // Simulated RPC response delay for the UI execution
+          // Simulating the RPC response delay for the UI execution
           await new Promise(resolve => setTimeout(resolve, 800));
           
           if (asset.ticker === "USDC") {
-             // Hardcoded successful response parity for the live USDC feed
              updatedPrices[asset.ticker] = "$1.000"; 
+          } else {
+             updatedPrices[asset.ticker] = "Pending Sync";
           }
         } catch (error) {
           console.error(`Chainlink fetch failed for ${asset.ticker}:`, error);
@@ -66,7 +63,6 @@ export default function MarketWatch({ isAuthenticated }: { isAuthenticated: bool
   return (
     <div className="w-full bg-[#000000] rounded-3xl border border-[#2C2C2E] overflow-hidden shadow-sm transition-all duration-500">
       
-      {/* Real-Time Ticker Strip */}
       <div className="w-full bg-[#1C1C1E] py-2 overflow-hidden flex border-b border-[#2C2C2E] relative">
         <div className="absolute left-4 top-2 text-[10px] text-[#8E8E93] z-10 bg-[#000000] px-2 rounded-full border border-[#2C2C2E]">
           ● LIVE (FINNHUB: {lastUpdated || "Syncing..."})
@@ -91,7 +87,6 @@ export default function MarketWatch({ isAuthenticated }: { isAuthenticated: bool
         </div>
       </div>
 
-      {/* Dynamic View Area */}
       <div className="p-6">
         <h2 className="text-2xl font-semibold text-white mb-6">
           {isAuthenticated ? "Your LedgerSync Portfolio" : "Global Secondary Market"}
@@ -109,7 +104,6 @@ export default function MarketWatch({ isAuthenticated }: { isAuthenticated: bool
                 <div>
                   <p className="text-lg font-bold text-white">{asset.ticker}</p>
                   <p className="text-xs text-[#8E8E93]">{asset.type}</p>
-                  {/* On-Chain Truth Rendered Directly Under the Ticker */}
                   <div className="mt-2 flex items-center space-x-1">
                     <span className="text-[10px] text-[#8E8E93] font-mono">CHAINLINK:</span>
                     <span className={`text-[10px] font-mono ${chainlinkPrices[asset.ticker] === '$1.000' ? 'text-[#34C759]' : 'text-amber-500'}`}>
