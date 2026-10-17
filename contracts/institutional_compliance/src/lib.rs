@@ -1,19 +1,7 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, symbol_short, Address, BytesN, Env,
-    Symbol, Vec,
+    contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol, Vec,
 };
-
-#[contracterror]
-#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-#[repr(u32)]
-pub enum ComplianceError {
-    AlreadyInitialized = 1,
-    EntityFrozenOrRevoked = 2,
-    InsufficientSignatures = 3,
-    InvalidTrustAnchor = 4,
-    ProhibitedYieldOnStablecoin = 5,
-}
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -41,13 +29,12 @@ pub struct InstitutionalComplianceContract;
 
 #[contractimpl]
 impl InstitutionalComplianceContract {
-    pub fn initialize(env: Env, admin: Address, oracle: Address) -> Result<(), ComplianceError> {
+    pub fn initialize(env: Env, admin: Address, oracle: Address) {
         if env.storage().instance().has(&ADMIN) {
-            return Err(ComplianceError::AlreadyInitialized);
+            panic!("Already initialized");
         }
         env.storage().instance().set(&ADMIN, &admin);
         env.storage().instance().set(&ORACLE, &oracle);
-        Ok(())
     }
 
     pub fn register_institution(
@@ -57,7 +44,7 @@ impl InstitutionalComplianceContract {
         lei_hash: BytesN<32>,
         threshold: u32,
         authorized_officers: Vec<Address>,
-    ) -> Result<(), ComplianceError> {
+    ) {
         trust_anchor.require_auth();
 
         let profile = InstitutionalProfile {
@@ -69,15 +56,10 @@ impl InstitutionalComplianceContract {
         };
 
         env.storage().persistent().set(&institution_wallet, &profile);
-        Ok(())
     }
 
-    pub fn update_compliance_status(
-        env: Env,
-        institution_wallet: Address,
-        is_active: bool,
-    ) -> Result<(), ComplianceError> {
-        let oracle: Address = env.storage().instance().get(&ORACLE).unwrap();
+    pub fn update_compliance_status(env: Env, institution_wallet: Address, is_active: bool) {
+        let oracle: Address = env.storage().instance().get(&ORACLE).unwrap_or_else(|| panic!("Not initialized"));
         oracle.require_auth();
 
         if let Some(mut profile) = env
@@ -87,9 +69,8 @@ impl InstitutionalComplianceContract {
         {
             profile.is_active = is_active;
             env.storage().persistent().set(&institution_wallet, &profile);
-            Ok(())
         } else {
-            Err(ComplianceError::InvalidTrustAnchor)
+            panic!("Invalid Trust Anchor or Unregistered Institution");
         }
     }
 
@@ -99,19 +80,19 @@ impl InstitutionalComplianceContract {
         signing_officers: Vec<Address>,
         asset_class: AssetClass,
         is_yield_action: bool,
-    ) -> Result<bool, ComplianceError> {
+    ) -> bool {
         let profile: InstitutionalProfile = env
             .storage()
             .persistent()
             .get(&institution_wallet)
-            .ok_or(ComplianceError::InvalidTrustAnchor)?;
+            .unwrap_or_else(|| panic!("Invalid Trust Anchor"));
 
         if !profile.is_active {
-            return Err(ComplianceError::EntityFrozenOrRevoked);
+            panic!("Entity compliance status frozen or revoked");
         }
 
         if is_yield_action && asset_class == AssetClass::PaymentStablecoin {
-            return Err(ComplianceError::ProhibitedYieldOnStablecoin);
+            panic!("Prohibited: Yield execution on Payment Stablecoins");
         }
 
         let mut valid_signatures: u32 = 0;
@@ -124,9 +105,9 @@ impl InstitutionalComplianceContract {
         }
 
         if valid_signatures < profile.threshold {
-            return Err(ComplianceError::InsufficientSignatures);
+            panic!("Insufficient authorized signatures for execution");
         }
 
-        Ok(true)
+        true
     }
 }

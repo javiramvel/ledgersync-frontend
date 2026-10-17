@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contracterror, contractimpl, token, Address, Env, Symbol, symbol_short};
+use soroban_sdk::{contract, contracterror, contractimpl, Address, Env, IntoVal, Symbol, symbol_short, vec};
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -59,9 +59,13 @@ impl DeltaReconciliationContract {
         admin.require_auth();
         
         let token_address: Address = env.storage().instance().get(&TOKEN_ID).unwrap();
-        let token_client = token::StellarAssetClient::new(&env, &token_address);
         
-        token_client.mint(&to, &amount);
+        // Safely invoke the target mint function, bypassing strict Wasm interface panics
+        env.invoke_contract::<()>(
+            &token_address,
+            &symbol_short!("mint"),
+            vec![&env, to.into_val(&env), amount.into_val(&env)],
+        );
     }
 
     pub fn burn_asset(env: Env, _ticker: Symbol, amount: i128, from: Address) {
@@ -69,8 +73,12 @@ impl DeltaReconciliationContract {
         admin.require_auth();
         
         let token_address: Address = env.storage().instance().get(&TOKEN_ID).unwrap();
-        let token_client = token::Client::new(&env, &token_address);
         
-        token_client.burn(&from, &amount);
+        // Safely invoke the target burn function
+        env.invoke_contract::<()>(
+            &token_address,
+            &symbol_short!("burn"),
+            vec![&env, from.into_val(&env), amount.into_val(&env)],
+        );
     }
 }

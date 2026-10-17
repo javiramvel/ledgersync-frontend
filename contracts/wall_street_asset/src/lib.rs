@@ -8,7 +8,6 @@ pub enum AssetError {
     AlreadyInitialized = 1,
     Unauthorized = 2,
     InvalidSplitRatio = 3,
-    InsufficientBalance = 4,
 }
 
 const ADMIN: Symbol = symbol_short!("ADMIN");
@@ -37,7 +36,7 @@ impl WallStreetAssetContract {
 
     pub fn execute_split(env: Env, numerator: i128, denominator: i128) -> Result<(), AssetError> {
         let admin: Address = env.storage().instance().get(&ADMIN).unwrap();
-        admin.require_auth(); // Direct auth required for corporate actions
+        admin.require_auth();
 
         if numerator <= 0 || denominator <= 0 {
             return Err(AssetError::InvalidSplitRatio);
@@ -55,8 +54,8 @@ impl WallStreetAssetContract {
         Ok(())
     }
 
-    pub fn mint(env: Env, to: Address, amount: i128) -> Result<(), AssetError> {
-        // Redundant auth removed; rely on Oracle's admin.require_auth()
+    // Removed the Result Enum to perfectly align the Wasm signature with the Oracle invoke call
+    pub fn mint(env: Env, to: Address, amount: i128) {
         let mut current_supply: i128 = env.storage().instance().get(&TOTAL_SUPPLY).unwrap_or(0);
         current_supply += amount;
         env.storage().instance().set(&TOTAL_SUPPLY, &current_supply);
@@ -66,16 +65,15 @@ impl WallStreetAssetContract {
         user_balance += amount;
         
         env.storage().persistent().set(&balance_key, &user_balance);
-        Ok(())
     }
 
-    pub fn burn(env: Env, from: Address, amount: i128) -> Result<(), AssetError> {
-        // Redundant auth removed; rely on Oracle's admin.require_auth()
+    // Removed the Result Enum; reverts via panic for insufficient balances
+    pub fn burn(env: Env, from: Address, amount: i128) {
         let balance_key = (symbol_short!("BAL"), from.clone());
         let mut user_balance: i128 = env.storage().persistent().get(&balance_key).unwrap_or(0);
         
         if user_balance < amount {
-            return Err(AssetError::InsufficientBalance);
+            panic!("Execution Halted: Insufficient On-Chain Balance");
         }
 
         user_balance -= amount;
@@ -84,8 +82,6 @@ impl WallStreetAssetContract {
         let mut current_supply: i128 = env.storage().instance().get(&TOTAL_SUPPLY).unwrap_or(0);
         current_supply -= amount;
         env.storage().instance().set(&TOTAL_SUPPLY, &current_supply);
-        
-        Ok(())
     }
 
     pub fn get_scaled_balance(env: Env, user: Address) -> i128 {
