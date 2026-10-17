@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required reconciliation parameters" }, { status: 400 });
     }
 
-    const oracleId = process.env.RECONCILIATION_ORACLE_ID;
+    const oracleId = "CDIGJICQW5ADASOSPWX2VA4GTKPV34ELRVFU557UEZXS2LWEIEERZ4HJ";
     const adminSecret = process.env.ADMIN_SECRET_KEY;
     
     if (!oracleId || !adminSecret) {
