@@ -136,7 +136,7 @@ function StockSplitEngine() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#2C2C2E] pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono uppercase tracking-wider text-[#FF3B30] font-semibold">
+            <span className="text-xs font-mono uppercase tracking-wider text-[#8E8E93] font-semibold">
               Corporate Action Engine 2
             </span>
             <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase bg-[#1C1C1E] text-[#8E8E93] border border-[#2C2C2E] rounded">
@@ -167,7 +167,7 @@ function StockSplitEngine() {
               value={ratio}
               onChange={(e) => setRatio(e.target.value)}
               disabled={loading}
-              className="w-full bg-[#000000] border border-[#2C2C2E] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#FF3B30] transition-all font-mono appearance-none cursor-pointer"
+              className="w-full bg-[#000000] border border-[#2C2C2E] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-white transition-all font-mono appearance-none cursor-pointer"
             >
               <option value="2,1">2:1 Forward Split (Double circulating units, halve nominal unit price)</option>
               <option value="3,1">3:1 Forward Split (Triple circulating units)</option>
@@ -186,14 +186,14 @@ function StockSplitEngine() {
             disabled={loading}
             className={`w-full py-3 px-5 rounded-xl font-mono text-xs uppercase tracking-wider font-semibold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer ${
               loading
-                ? "bg-[#FF3B30]/30 text-white/50 cursor-not-allowed border border-[#FF3B30]/50"
-                : "bg-[#FF3B30]/10 text-[#FF3B30] hover:bg-[#FF3B30] hover:text-white border border-[#FF3B30]/30 transition-colors"
+                ? "bg-white/50 text-black/50 cursor-not-allowed"
+                : "bg-white hover:bg-neutral-200 text-black transition-colors"
             }`}
           >
             {loading ? (
               <>
-                <span className="inline-block w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
-                Broadcasting to Soroban...
+                <span className="inline-block w-3 h-3 rounded-full border-2 border-black/30 border-t-black animate-spin"></span>
+                Broadcasting...
               </>
             ) : (
               "Authorize & Execute Split"
@@ -201,33 +201,14 @@ function StockSplitEngine() {
           </button>
         </div>
       </div>
-
+      {/* ... keeping your existing status message rendering below ... */}
       {statusMessage && (
-        <div
-          className={`mt-4 p-4 rounded-xl border text-xs font-mono flex flex-col gap-1 ${
-            txHash
-              ? "bg-[#34C759]/10 border-[#34C759]/30 text-[#34C759]"
-              : "bg-[#FF3B30]/10 border-[#FF3B30]/30 text-[#FF3B30]"
-          }`}
-        >
+        <div className={`mt-4 p-4 rounded-xl border text-xs font-mono flex flex-col gap-1 ${txHash ? "bg-[#34C759]/10 border-[#34C759]/30 text-[#34C759]" : "bg-[#FF3B30]/10 border-[#FF3B30]/30 text-[#FF3B30]"}`}>
           <div className="flex items-center justify-between">
             <span>{statusMessage}</span>
-            {txHash && (
-              <a
-                href={`https://stellar.expert/explorer/public/tx/${txHash}`}
-                target="_blank"
-                rel="noreferrer"
-                className="underline hover:text-white transition-colors"
-              >
-                View on StellarExpert →
-              </a>
-            )}
+            {txHash && <a href={`https://stellar.expert/explorer/public/tx/${txHash}`} target="_blank" rel="noreferrer" className="underline hover:text-white transition-colors">View on StellarExpert →</a>}
           </div>
-          {txHash && (
-            <span className="text-[11px] text-[#8E8E93] break-all select-all mt-1">
-              Tx: {txHash}
-            </span>
-          )}
+          {txHash && <span className="text-[11px] text-[#8E8E93] break-all select-all mt-1">Tx: {txHash}</span>}
         </div>
       )}
     </div>

@@ -153,12 +153,12 @@ export default function CorporateTreasuryHub({ onSuccessAction }: CorporateTreas
             </div>
           </div>
           <button
-            onClick={handleStockSplit}
-            disabled={isExecutingSplit}
-            className="mt-6 w-full py-3 px-4 rounded-xl bg-[#000000] hover:bg-[#2C2C2E] text-white border border-[#2C2C2E] font-semibold text-xs tracking-wider uppercase transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {isExecutingSplit ? "Executing Split..." : "Execute Corporate Action"}
-          </button>
+  onClick={handleStockSplit}
+  disabled={isExecutingSplit}
+  className="mt-6 w-full py-3 px-4 rounded-xl bg-white hover:bg-neutral-200 text-black font-semibold text-xs tracking-wider uppercase transition-colors disabled:opacity-50 cursor-pointer shadow-lg"
+>
+  {isExecutingSplit ? "Executing Split..." : "Execute Corporate Action"}
+</button>
         </div>
 
         {/* Institutional Fiat Gateway (Plaid Brokerage Bridge) */}
