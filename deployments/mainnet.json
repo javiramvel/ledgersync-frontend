@@ -1,0 +1,16 @@
+{
+  "network": "mainnet",
+  "deployedAt": null,
+  "admin": null,
+  "treasury": null,
+  "contracts": {
+    "asset": null,
+    "reconciliation": null,
+    "compliance": null,
+    "yield": null,
+    "solvency": null,
+    "pricing": null,
+    "chainlinkProxy": "CDQBHEUGLDHMSUHG4IH33RJBUTMNCZOT4JIAQR4WZFRDZW6DR6S32ZLZ",
+    "payoutToken": "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA"
+  }
+}

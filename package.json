@@ -1,45 +1,41 @@
 {
-  "name": "treasury-dashboard",
-  "version": "0.1.0",
+  "name": "ledgersync",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "test:contracts": "cd contracts && cargo test",
+    "deploy:testnet": "./scripts/deploy.sh testnet"
   },
   "dependencies": {
-    "@acta-team/did-stellar": "^0.1.2",
     "@aws-sdk/client-s3": "^3.1149.0",
     "@stellar/freighter-api": "^6.0.1",
-    "@stellar/stellar-sdk": "^12.3.0",
-    "compliance-gateway-client": "file:packages/compliance-gateway-client",
+    "@stellar/stellar-sdk": "^14.4.0",
     "next": "16.3.5",
     "next-themes": "^0.4.6",
     "plaid": "^47.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-plaid-link": "^5.0.0",
+    "server-only": "^0.0.1",
     "zod": "^4.6.5"
-  },
-  "overrides": {
-    "toml": "^4.2.0",
-    "@stellar/stellar-sdk": "^12.3.0",
-    "@acta-team/did-stellar": {
-      "@stellar/stellar-sdk": "^12.3.0"
-    }
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.6.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "autoprefixer": "^10.6.1",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.5",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3"
   },
   "allowScripts": {
