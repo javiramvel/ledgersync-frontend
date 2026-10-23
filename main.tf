@@ -13,9 +13,20 @@ variable "plaid_secret" {
   sensitive = true
 }
 
-variable "admin_secret_key" {
-  type      = string
-  sensitive = true
+variable "plaid_token_secret" {
+  description = "32-byte hex key that encrypts the Plaid access-token cookie (openssl rand -hex 32)"
+  type        = string
+  sensitive   = true
+}
+
+variable "stellar_network" {
+  type    = string
+  default = "testnet"
+}
+
+variable "audit_bucket" {
+  type    = string
+  default = "wall-street-tokenization-audit-logs-v2"
 }
 
 provider "aws" {
@@ -55,17 +66,61 @@ data "aws_iam_role" "ecs_execution_role" {
   name = "ecsTaskExecutionRole"
 }
 
-resource "aws_iam_role_policy" "s3_audit_write_policy" {
-  name   = "ledgersync_s3_audit_write"
-  role   = data.aws_iam_role.ecs_execution_role.id
+# Application secrets live in Secrets Manager, never in the task definition or image.
+resource "aws_secretsmanager_secret" "app" {
+  name        = "ledgersync/app"
+  description = "LedgerSync dashboard server secrets"
+  kms_key_id  = aws_kms_key.ledgersync_key.arn
+}
+
+resource "aws_secretsmanager_secret_version" "app" {
+  secret_id = aws_secretsmanager_secret.app.id
+  secret_string = jsonencode({
+    PLAID_SECRET       = var.plaid_secret
+    PLAID_TOKEN_SECRET = var.plaid_token_secret
+    FINNHUB_API_KEY    = var.finnhub_api_key
+  })
+}
+
+# The execution role pulls the image and injects secrets at container start.
+resource "aws_iam_role_policy" "execution_read_secrets" {
+  name = "ledgersync_read_app_secrets"
+  role = data.aws_iam_role.ecs_execution_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      { Effect = "Allow", Action = ["secretsmanager:GetSecretValue"], Resource = aws_secretsmanager_secret.app.arn },
+      { Effect = "Allow", Action = ["kms:Decrypt"], Resource = aws_kms_key.ledgersync_key.arn },
+    ]
+  })
+}
+
+# Least-privilege runtime role for the app: append-only access to its WORM audit prefix.
+resource "aws_iam_role" "app_task" {
+  name = "ledgersync-app-task"
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [{ Effect = "Allow", Principal = { Service = "ecs-tasks.amazonaws.com" }, Action = "sts:AssumeRole" }]
+  })
+}
+
+resource "aws_iam_role_policy" "app_task_audit" {
+  name = "ledgersync_worm_audit"
+  role = aws_iam_role.app_task.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Effect   = "Allow"
-        Action   = ["s3:PutObject", "s3:PutObjectAcl"]
-        Resource = "arn:aws:s3:::wall-street-tokenization-audit-logs-v2/audits/TOKEN_MINT/*"
-      }
+        Action   = ["s3:PutObject", "s3:PutObjectRetention", "s3:GetObject", "s3:GetObjectRetention"]
+        Resource = "arn:aws:s3:::${var.audit_bucket}/ledgersync/*"
+      },
+      {
+        Effect    = "Allow"
+        Action    = ["s3:ListBucket"]
+        Resource  = "arn:aws:s3:::${var.audit_bucket}"
+        Condition = { StringLike = { "s3:prefix" = ["ledgersync/*"] } }
+      },
     ]
   })
 }
@@ -92,11 +147,25 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    from_port   = 3000
-    to_port     = 3000
-    protocol    = "tcp"
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Containers accept traffic only from the load balancer (and therefore only via CloudFront/WAF).
+resource "aws_security_group" "ecs_sg" {
+  name        = "ledgersync-ecs-sg"
+  description = "Next.js tasks: ingress from ALB only"
+  vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    from_port       = 3000
+    to_port         = 3000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id]
   }
 
   egress {
@@ -112,7 +181,7 @@ resource "aws_lb" "ledgersync_alb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
-  subnets            = data.aws_subnets.default.ids 
+  subnets            = data.aws_subnets.default.ids
 }
 
 resource "aws_lb_target_group" "nextjs_tg" {
@@ -165,7 +234,7 @@ resource "aws_ecs_task_definition" "nextjs_task" {
   cpu                      = "1024"
   memory                   = "2048"
   execution_role_arn       = data.aws_iam_role.ecs_execution_role.arn
-  task_role_arn            = data.aws_iam_role.ecs_execution_role.arn
+  task_role_arn            = aws_iam_role.app_task.arn
 
   container_definitions = jsonencode([
     {
@@ -179,22 +248,19 @@ resource "aws_ecs_task_definition" "nextjs_task" {
           protocol      = "tcp"
         }
       ]
+      # Contract IDs ship inside the image (deployments/<network>.json); only runtime config here.
       environment = [
         { name = "NODE_ENV", value = "production" },
-        { name = "NEXT_PUBLIC_SOROBAN_RPC", value = "https://mainnet.sorobanrpc.com" },
-        { name = "NEXT_PUBLIC_STELLAR_NETWORK", value = "public" },
-        { name = "NEXT_PUBLIC_FINNHUB_API_KEY", value = var.finnhub_api_key },
+        { name = "NEXT_PUBLIC_STELLAR_NETWORK", value = var.stellar_network },
         { name = "PLAID_ENV", value = "sandbox" },
         { name = "PLAID_CLIENT_ID", value = var.plaid_client_id },
-        { name = "PLAID_SECRET", value = var.plaid_secret },
-        { name = "NEXT_PUBLIC_SOLVENCY_PROOF_CONTRACT_ID", value = "CDYIBWL6QJXXDCI6K07LLKGR0AWW7IIIVAE4X3FC6HTCFLVKHZ4WP653" },
-        { name = "NEXT_PUBLIC_COMPLIANCE_CONTRACT_ID", value = "CDSCMHG5H6US4Q45B326B2IBJTZW4QUDWZT5YIWHKJGMHIVJKQV2QNQV" },
-        { name = "ADMIN_SECRET_KEY", value = var.admin_secret_key },
-        { name = "NEXT_PUBLIC_YIELD_CONTRACT_ID", value = "CA26MUWWNBUOIJIGMNSCOOR6HKTUB6PX5LTHNOL5PS3UH4IWMJ5SHVE7" },
-        { name = "PRIMARY_ASSET_ID", value = "CB22A5XKUKTKYKMP4QUIOH2RVUCLNAYFO3EKSZUP2C6BL5KJ3TFHP4ZU" },
-        { name = "RECONCILIATION_ORACLE_ID", value = "CDIGJICQW5ADASOSPWX2VA4GTKPV34ELRVFU557UEZXS2LWEIEERZ4HJ" },
-        { name = "NEXT_PUBLIC_AUDIT_BUCKET_NAME", value = "wall-street-tokenization-audit-logs-685248003648-us-east-1-an" },
+        { name = "AUDIT_BUCKET", value = var.audit_bucket },
+        { name = "AUDIT_RETENTION_YEARS", value = "6" },
         { name = "AWS_REGION", value = "us-east-1" }
+      ]
+      secrets = [
+        for k in ["PLAID_SECRET", "PLAID_TOKEN_SECRET", "FINNHUB_API_KEY"] :
+        { name = k, valueFrom = "${aws_secretsmanager_secret.app.arn}:${k}::" }
       ]
       logConfiguration = {
         logDriver = "awslogs"
@@ -218,7 +284,7 @@ resource "aws_ecs_service" "nextjs_service" {
 
   network_configuration {
     subnets          = data.aws_subnets.default.ids
-    security_groups  = [aws_security_group.alb_sg.id]
+    security_groups  = [aws_security_group.ecs_sg.id]
     assign_public_ip = true
   }
 
@@ -230,22 +296,10 @@ resource "aws_ecs_service" "nextjs_service" {
 }
 
 # =========================================================
-# 3. HIGH AVAILABILITY RDS POSTGRESQL
+# 3. DATABASE
+# The unused Multi-AZ RDS instance was retired (final snapshot: ledgersync-db-final-2026-10-23).
+# LedgerSync's system of record is the Stellar ledger plus the S3 WORM archive.
 # =========================================================
-resource "aws_db_instance" "ledgersync_db" {
-  identifier                  = "ledgersync-production-db"
-  allocated_storage           = 50
-  engine                      = "postgres"
-  engine_version              = "15" 
-  instance_class              = "db.t4g.large"
-  username                    = "ledgersync_admin"
-  manage_master_user_password = true
-  multi_az                    = true
-  storage_encrypted           = true
-  kms_key_id                  = aws_kms_key.ledgersync_key.arn
-  skip_final_snapshot         = true
-  deletion_protection         = false
-}
 
 # =========================================================
 # 4. EDGE CACHING & DDOS PROTECTION (CloudFront + WAF)
@@ -255,7 +309,7 @@ resource "aws_wafv2_web_acl" "ledgersync_waf" {
   name        = "ledgersync-global-waf"
   description = "Layer 7 DDoS and Exploit Protection"
   scope       = "CLOUDFRONT"
-  
+
   default_action {
     allow {}
   }
@@ -290,9 +344,9 @@ resource "aws_wafv2_web_acl" "ledgersync_waf" {
 }
 
 resource "aws_cloudfront_distribution" "ledgersync_cdn" {
-  enabled             = true
-  is_ipv6_enabled     = true
-  web_acl_id          = aws_wafv2_web_acl.ledgersync_waf.arn
+  enabled         = true
+  is_ipv6_enabled = true
+  web_acl_id      = aws_wafv2_web_acl.ledgersync_waf.arn
 
   origin {
     domain_name = aws_lb.ledgersync_alb.dns_name
@@ -343,7 +397,7 @@ resource "aws_wafv2_web_acl" "alb_regional_waf" {
   name        = "ledgersync-alb-regional-waf"
   description = "Layer 7 DDoS Protection attached directly to ALB"
   scope       = "REGIONAL"
-  
+
   default_action {
     allow {}
   }

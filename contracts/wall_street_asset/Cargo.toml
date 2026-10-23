@@ -1,19 +1,15 @@
 [package]
 name = "wall_street_asset"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
+publish = false
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
+doctest = false
 
 [dependencies]
-soroban-sdk = "28.0.0"
+soroban-sdk = { workspace = true }
 
-[profile.release]
-opt-level = "z"
-overflow-checks = true
-debug = 0
-strip = "debuginfo"
-panic = "abort"
-codegen-units = 1
-lto = true
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }

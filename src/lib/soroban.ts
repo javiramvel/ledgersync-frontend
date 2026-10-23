@@ -1,161 +1,85 @@
-import { 
-  signTransaction, 
-  getNetworkDetails, 
-  isConnected, 
-  requestAccess 
-} from "@stellar/freighter-api";
 import {
-  TransactionBuilder,
-  Networks,
+  Account,
+  Address,
   Contract,
+  TransactionBuilder,
   nativeToScVal,
+  rpc,
+  scValToNative,
   xdr,
-  rpc as SorobanRpc,
 } from "@stellar/stellar-sdk";
+import { network } from "./network";
 
-// Strictly enforced Mainnet RPC and Passphrase. No testnet fallbacks.
-const RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC || "https://mainnet.sorobanrpc.com";
-const NETWORK_PASSPHRASE = Networks.PUBLIC; 
-const server = new SorobanRpc.Server(RPC_URL, { allowHttp: false });
+export const server = new rpc.Server(network.rpcUrl);
 
-export const LEDGERSYNC_REGISTRY = {
-  // Hardcoded Mainnet Contracts (Bypasses Fargate ENV variable failures)
-  SOLVENCY_PROOF: "CDYIBWL6QJXXDCI6K07LLKGR0AWW7IIIVAE4X3FC6HTCFLVKHZ4WP653",
-  YIELD_MATRIX: "CA26MUWWNBUOIJIGMNSCOOR6HKTUB6PX5LTHNOL5PS3UH4IWMJ5SHVE7",
-  INSTITUTIONAL_COMPLIANCE: "CDSCMHG5H6US4Q45B326B2IBJTZW4QUDWZT5YIWHKJGMHIVJKQV2QNQV",
-  DELTA_RECONCILIATION: "CD5YKSCLYIJBFSSLCAKTF5JX6X5AP5XHYBEF6EZMXWMH2TPL52BEP3HJ",
-  WALL_STREET_ASSET: "CAKD6QPLF6VVKXTDKIB4MP2XKSGGZJGC256Z6SKCK5LL2BEAXEMTRUVN",
+// Read-only calls are simulated, never submitted, so any well-formed source account works.
+const READ_SOURCE = "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7";
 
-  // Native Chainlink Stellar Infrastructure
-  CHAINLINK_PROXY: "CDQBHEUGLDHMSUHG4IH33RJBUTMNCZOT4JIAQR4WZFRDZW6DR6S32ZLZ",
-  CHAINLINK_FEEDS: {
-    // 32-byte data_id for USDC Market Feed
-    USDC_USD: "0x01a80ff216000332000000000000000000000000000000000000000000000000", 
-    SPY_USD: "PENDING_MAINNET_DEPLOYMENT",
-    UST_10YR: "PENDING_MAINNET_DEPLOYMENT"
-  }
+const READ_TIMEOUT_MS = 10_000;
+
+function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  return Promise.race([
+    p.finally(() => clearTimeout(timer)),
+    new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    }),
+  ]);
+}
+
+/** Simulates a contract call and returns its decoded return value. */
+export async function readContract<T>(contractId: string, method: string, args: xdr.ScVal[] = []): Promise<T> {
+  const tx = new TransactionBuilder(new Account(READ_SOURCE, "0"), {
+    fee: "100",
+    networkPassphrase: network.passphrase,
+  })
+    .addOperation(new Contract(contractId).call(method, ...args))
+    .setTimeout(30)
+    .build();
+
+  const sim = await withTimeout(server.simulateTransaction(tx), READ_TIMEOUT_MS, `${method} timed out`);
+  if (rpc.Api.isSimulationError(sim)) throw new Error(describeError(sim.error));
+  if (!sim.result) throw new Error(`${method} returned no value`);
+  return scValToNative(sim.result.retval) as T;
+}
+
+export const sc = {
+  address: (a: string) => new Address(a).toScVal(),
+  i128: (v: bigint) => nativeToScVal(v, { type: "i128" }),
+  u64: (v: bigint) => nativeToScVal(v, { type: "u64" }),
+  u32: (v: number) => nativeToScVal(v, { type: "u32" }),
+  bytes32: (hex: string) => nativeToScVal(Buffer.from(hex.replace(/^0x/, ""), "hex"), { type: "bytes" }),
+  addresses: (list: string[]) => xdr.ScVal.scvVec(list.map((a) => new Address(a).toScVal())),
 };
 
-export type LedgerSyncAction = 
-  | "MINT" 
-  | "BURN" 
-  | "SYNC_STATE" 
-  | "DISTRIBUTE_YIELD" 
-  | "VERIFY_RESERVES";
+const CONTRACT_ERRORS: Record<string, string> = {
+  // delta_reconciliation
+  "reconcile:1": "Nonce already used (replay rejected).",
+  "reconcile:2": "Nonce out of sequence. Refresh and retry.",
+  "reconcile:3": "Custodian balance cannot be negative.",
+  // wall_street_asset
+  "asset:1": "Amount must be greater than zero.",
+  "asset:2": "Invalid split ratio.",
+  "asset:3": "Insufficient on-chain balance.",
+  "asset:4": "Destination wallet is not a registered, active institution.",
+  "asset:5": "Amount is not representable at the current split ratio.",
+  // yield_matrix
+  "yield:2": "Holder list must cover the entire supply exactly once.",
+  "yield:3": "Margin above the 10% cap.",
+  "yield:4": "The asset has no supply to distribute against.",
+  // solvency_proof
+  "solvency:1": "A newer proof is already published.",
+  "solvency:2": "No proof has been published yet.",
+  // institutional_compliance
+  "compliance:5": "Threshold must be between 1 and the number of officers.",
+};
 
-export async function executeLedgerSync(
-  action: LedgerSyncAction,
-  assetCode: string,
-  amountOrPayload: any
-): Promise<{ success: boolean; txHash?: string; error?: string }> {
-  try {
-    const status = await isConnected();
-    if (!status.isConnected) throw new Error("Freighter wallet is not connected.");
-
-    const access = await requestAccess();
-    if (access.error) throw new Error(access.error);
-    const activeKey = access.address;
-
-    const network = await getNetworkDetails();
-    if (network.network !== "PUBLIC") { 
-      throw new Error("Network mismatch: Switch Freighter to the Stellar Mainnet.");
-    }
-
-    let targetContractId = "";
-    let functionName = "";
-    let contractArgs: any[] = [];
-    
-    let currentNonce = parseInt(localStorage.getItem('ledgerSyncNonce') || '0');
-    let nextNonce = BigInt(currentNonce + 1);
-
-    switch (action) {
-      case "MINT":
-      case "BURN":
-        targetContractId = LEDGERSYNC_REGISTRY.DELTA_RECONCILIATION;
-        functionName = action === "MINT" ? "mint_asset" : "burn_asset";
-        contractArgs = [
-          nativeToScVal(assetCode, { type: "symbol" }),
-          nativeToScVal(BigInt(Math.floor(amountOrPayload)), { type: "i128" }),
-          nativeToScVal(activeKey, { type: "address" })
-        ];
-        break;
-      case "SYNC_STATE":
-        targetContractId = LEDGERSYNC_REGISTRY.DELTA_RECONCILIATION;
-        functionName = "sync_state";
-        contractArgs = [
-          nativeToScVal(nextNonce, { type: "u64" }),
-          nativeToScVal(BigInt(Math.floor(amountOrPayload)), { type: "i128" })
-        ];
-        break;
-      case "DISTRIBUTE_YIELD":
-        targetContractId = LEDGERSYNC_REGISTRY.YIELD_MATRIX;
-        functionName = "distribute_yield";
-        contractArgs = [
-          nativeToScVal(assetCode, { type: "symbol" }),
-          nativeToScVal(BigInt(Math.floor(amountOrPayload)), { type: "i128" })
-        ];
-        break;
-      case "VERIFY_RESERVES":
-        targetContractId = LEDGERSYNC_REGISTRY.SOLVENCY_PROOF;
-        functionName = "verify_reserves";
-        contractArgs = [nativeToScVal(assetCode, { type: "symbol" })];
-        break;
-      default:
-        throw new Error("Unsupported LedgerSync operation.");
-    }
-
-    const account = await server.getAccount(activeKey);
-    const contract = new Contract(targetContractId);
-
-    const tx = new TransactionBuilder(account, {
-      fee: "5000000", // Aggressive fee bump to 5 XLM to eliminate resource constraints
-      networkPassphrase: NETWORK_PASSPHRASE,
-    })
-      .addOperation(contract.call(functionName, ...contractArgs))
-      .setTimeout(300)
-      .build();
-
-    const preparedTx = await server.prepareTransaction(tx);
-    const rawXdr = preparedTx.toXDR();
-
-    const signedTx = await signTransaction(rawXdr, { networkPassphrase: Networks.PUBLIC });
-    if (signedTx.error) throw new Error(`Signature rejected: ${signedTx.error}`);
-
-    const txToSubmit = TransactionBuilder.fromXDR(signedTx.signedTxXdr, NETWORK_PASSPHRASE) as any;
-    const response = await server.sendTransaction(txToSubmit);
-
-    // DEEP DIAGNOSTIC DECODER
-    if (response.status === "ERROR") {
-      let exactError = "Unknown rejection";
-      if (response.errorResult) {
-        try {
-          // The SDK already parsed this into an xdr.TransactionResult object
-          exactError = response.errorResult.result().switch().name; 
-        } catch (e) {
-          exactError = "Failed to extract Core error";
-        }
-      }
-      throw new Error(`Mainnet Rejection Code: ${exactError}`);
-    }
-
-    let txStatus = await server.getTransaction(response.hash);
-    let attempts = 0;
-    while (txStatus.status === "NOT_FOUND" && attempts < 10) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      txStatus = await server.getTransaction(response.hash);
-      attempts++;
-    }
-
-    if (txStatus.status === "FAILED") {
-      throw new Error(`Ledger execution failed. Hash: ${response.hash}`);
-    }
-
-    if (action === "SYNC_STATE") {
-        localStorage.setItem('ledgerSyncNonce', nextNonce.toString());
-    }
-
-    return { success: true, txHash: response.hash };
-  } catch (error: any) {
-    return { success: false, error: error.message || "Execution failed." };
-  }
+/** Maps raw host errors such as `Error(Contract, #4)` to something an operator can act on. */
+export function describeError(raw: string, scope?: string): string {
+  const code = raw.match(/Error\(Contract, #(\d+)\)/)?.[1];
+  if (code && scope && CONTRACT_ERRORS[`${scope}:${code}`]) return CONTRACT_ERRORS[`${scope}:${code}`];
+  if (/Error\(Auth, InvalidAction\)/.test(raw)) return "The connected wallet is not authorized for this action.";
+  if (code) return `Contract rejected the call (error #${code}).`;
+  const firstLine = raw.split("\n")[0];
+  return firstLine.length > 240 ? `${firstLine.slice(0, 240)}…` : firstLine;
 }

@@ -1,33 +1,53 @@
-name: Deploy to AWS ECS
+name: CI / Deploy
 
 on:
+  pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
+
+env:
+  AWS_REGION: us-west-2
+  ECR_REPOSITORY: ledgersync-nextjs-frontend
+  ECS_CLUSTER: ledgersync-fargate-cluster
+  ECS_SERVICE: ledgersync-nextjs-service
+  STELLAR_NETWORK: testnet
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cd contracts && cargo test
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-west-2
-
-    - name: Login to Amazon ECR
-      run: aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 685248003648.dkr.ecr.us-west-2.amazonaws.com
-
-    - name: Build, Tag, and Push Docker Image
-      run: |
-        docker build --platform linux/amd64 -t nextjs-frontend .
-        docker tag nextjs-frontend:latest 685248003648.dkr.ecr.us-west-2.amazonaws.com/ledgersync-nextjs-frontend:latest
-        docker push 685248003648.dkr.ecr.us-west-2.amazonaws.com/ledgersync-nextjs-frontend:latest
-
-    - name: Update ECS Service
-      run: aws ecs update-service --cluster ledgersync-fargate-cluster --service ledgersync-nextjs-service --force-new-deployment --region us-west-2
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push image
+        env:
+          IMAGE: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+        run: |
+          docker build --platform linux/amd64 \
+            --build-arg NEXT_PUBLIC_STELLAR_NETWORK=$STELLAR_NETWORK \
+            -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
+          docker push --all-tags $IMAGE
+      - name: Roll ECS service
+        run: aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --force-new-deployment --region $AWS_REGION
