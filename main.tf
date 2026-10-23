@@ -296,24 +296,10 @@ resource "aws_ecs_service" "nextjs_service" {
 }
 
 # =========================================================
-# 3. HIGH AVAILABILITY RDS POSTGRESQL
-# NOTE: no application code uses this database. It is retained only until the owner decides
-# whether to remove it (Multi-AZ db.t4g.large is a significant fixed monthly cost).
+# 3. DATABASE
+# The unused Multi-AZ RDS instance was retired (final snapshot: ledgersync-db-final-2026-10-23).
+# LedgerSync's system of record is the Stellar ledger plus the S3 WORM archive.
 # =========================================================
-resource "aws_db_instance" "ledgersync_db" {
-  identifier                  = "ledgersync-production-db"
-  allocated_storage           = 50
-  engine                      = "postgres"
-  engine_version              = "15"
-  instance_class              = "db.t4g.large"
-  username                    = "ledgersync_admin"
-  manage_master_user_password = true
-  multi_az                    = true
-  storage_encrypted           = true
-  kms_key_id                  = aws_kms_key.ledgersync_key.arn
-  skip_final_snapshot         = true
-  deletion_protection         = false
-}
 
 # =========================================================
 # 4. EDGE CACHING & DDOS PROTECTION (CloudFront + WAF)

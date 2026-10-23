@@ -12,7 +12,7 @@ Reviewers consider only what is in the submission, so every claim below points t
 | Complete architecture outline | Ready | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Build readiness | Ready | Reproducible `scripts/deploy.sh`, CI with contract + app tests, IaC (`main.tf`) |
 | Stellar relevance (not storage-only) | Ready | Supply control, compliance gating, atomic yield, on-chain oracle consumption |
-| Open-source smart contracts | **Add LICENSE** | Contracts in `contracts/`; add Apache-2.0 `LICENSE` |
+| Open-source smart contracts | Ready | Apache-2.0 `LICENSE`; contracts in `contracts/` |
 | Budget alignment | **Needs owner input** | Development costs for Stellar-integrated components only; no marketing |
 | Ecosystem value & differentiation | Ready | Brings custodian-backed RWA supply + Chainlink RWA feeds (FLHY, XAUM, USPC NAV) to Stellar with a regulated audit trail |
 

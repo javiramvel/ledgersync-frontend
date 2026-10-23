@@ -52,5 +52,6 @@ Containment status:
 - [ ] Move remaining XLM out of `GAMKTQ…` and stop using that key everywhere.
 - [ ] Rotate the Plaid secret in the Plaid dashboard.
 - [ ] Purge tfstate/.env from git history (git-filter-repo + force push) and request GitHub cache purge.
-- [ ] Take down or redeploy the live dashboard (its legacy API routes still sign with the exposed key).
+- [ ] Redeploy the live dashboard (legacy API routes still sign with the exposed key).
+- [ ] Retire the unused RDS instance (final snapshot first).
 - [ ] Store Terraform state remotely (S3 backend + DynamoDB lock, encrypted) instead of on disk.

@@ -92,5 +92,4 @@ Switching to Mainnet is `ADMIN_IDENTITY=<funded key> ./scripts/deploy.sh mainnet
 
 ## License
 
-Smart contracts are intended to be released as open source (SCF requirement). Add a `LICENSE` file
-(Apache-2.0 recommended) before submission.
+Apache-2.0 (see `LICENSE`). Smart contracts are open source per the SCF requirement.
